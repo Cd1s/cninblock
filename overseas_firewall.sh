@@ -88,7 +88,7 @@ download_cn_ipv4_list() {
 # 下载中国IP列表 (IPv6)
 download_cn_ipv6_list() {
     echo -e "${BLUE}📥 正在下载中国IPv6列表...${NC}"
-    wget -q -O /tmp/cn_ipv6.zone https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ipv6_list.txt
+    wget -q -O /tmp/cn_ipv6.zone https://www.ipdeny.com/ipv6/ipaddresses/blocks/cn.zone
     if [ $? -ne 0 ] || [ ! -s /tmp/cn_ipv6.zone ]; then
         echo -e "${YELLOW}主源失败，尝试备用 APNIC 来源...${NC}"
         wget -q -O- 'http://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest' | \
