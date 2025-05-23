@@ -134,20 +134,20 @@ if [ -f /etc/overseas_only_blocker/ipv4_enabled ]; then
     iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A INPUT -i lo -j ACCEPT
     
-    # 允许特定端口
+    # 对放行列表中的端口进行中国IP封禁
     while read port; do
         if [[ \$port == *-* ]]; then
             IFS='-' read -r start_port end_port <<< "\$port"
-            iptables -A INPUT -p tcp --match multiport --dports \$start_port:\$end_port -j ACCEPT
-            iptables -A INPUT -p udp --match multiport --dports \$start_port:\$end_port -j ACCEPT
+            iptables -A INPUT -p tcp --match multiport --dports \$start_port:\$end_port -m set --match-set $IPV4_IPSET_NAME src -j DROP
+            iptables -A INPUT -p udp --match multiport --dports \$start_port:\$end_port -m set --match-set $IPV4_IPSET_NAME src -j DROP
         else
-            iptables -A INPUT -p tcp --dport \$port -j ACCEPT
-            iptables -A INPUT -p udp --dport \$port -j ACCEPT
+            iptables -A INPUT -p tcp --dport \$port -m set --match-set $IPV4_IPSET_NAME src -j DROP
+            iptables -A INPUT -p udp --dport \$port -m set --match-set $IPV4_IPSET_NAME src -j DROP
         fi
     done < /etc/overseas_only_blocker/allowed_ports.txt
     
-    # 拒绝中国IP访问
-    iptables -A INPUT -m set --match-set $IPV4_IPSET_NAME src -j DROP
+    # 允许所有其他流量
+    iptables -A INPUT -j ACCEPT
 fi
 
 # IPv6 配置
@@ -167,20 +167,20 @@ if [ -f /etc/overseas_only_blocker/ipv6_enabled ]; then
     ip6tables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
     ip6tables -A INPUT -i lo -j ACCEPT
     
-    # 允许特定端口
+    # 对放行列表中的端口进行中国IP封禁
     while read port; do
         if [[ \$port == *-* ]]; then
             IFS='-' read -r start_port end_port <<< "\$port"
-            ip6tables -A INPUT -p tcp --match multiport --dports \$start_port:\$end_port -j ACCEPT
-            ip6tables -A INPUT -p udp --match multiport --dports \$start_port:\$end_port -j ACCEPT
+            ip6tables -A INPUT -p tcp --match multiport --dports \$start_port:\$end_port -m set --match-set $IPV6_IPSET_NAME src -j DROP
+            ip6tables -A INPUT -p udp --match multiport --dports \$start_port:\$end_port -m set --match-set $IPV6_IPSET_NAME src -j DROP
         else
-            ip6tables -A INPUT -p tcp --dport \$port -j ACCEPT
-            ip6tables -A INPUT -p udp --dport \$port -j ACCEPT
+            ip6tables -A INPUT -p tcp --dport \$port -m set --match-set $IPV6_IPSET_NAME src -j DROP
+            ip6tables -A INPUT -p udp --dport \$port -m set --match-set $IPV6_IPSET_NAME src -j DROP
         fi
     done < /etc/overseas_only_blocker/allowed_ports.txt
     
-    # 拒绝中国IP访问
-    ip6tables -A INPUT -m set --match-set $IPV6_IPSET_NAME src -j DROP
+    # 允许所有其他流量
+    ip6tables -A INPUT -j ACCEPT
 fi
 
 exit 0
@@ -237,20 +237,22 @@ install_ipv4_overseas() {
     iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A INPUT -i lo -j ACCEPT
     
-    # 允许特定端口
+    # 对放行列表中的端口进行中国IP封禁
     while read port; do
         if [[ $port == *-* ]]; then
             IFS='-' read -r start_port end_port <<< "$port"
-            iptables -A INPUT -p tcp --match multiport --dports $start_port:$end_port -j ACCEPT
-            iptables -A INPUT -p udp --match multiport --dports $start_port:$end_port -j ACCEPT
+            # 先允许非中国IP访问这些端口
+            iptables -A INPUT -p tcp --match multiport --dports $start_port:$end_port -m set --match-set $IPV4_IPSET_NAME src -j DROP
+            iptables -A INPUT -p udp --match multiport --dports $start_port:$end_port -m set --match-set $IPV4_IPSET_NAME src -j DROP
         else
-            iptables -A INPUT -p tcp --dport $port -j ACCEPT
-            iptables -A INPUT -p udp --dport $port -j ACCEPT
+            # 先允许非中国IP访问这个端口
+            iptables -A INPUT -p tcp --dport $port -m set --match-set $IPV4_IPSET_NAME src -j DROP
+            iptables -A INPUT -p udp --dport $port -m set --match-set $IPV4_IPSET_NAME src -j DROP
         fi
     done < "$ALLOWED_PORTS_FILE"
     
-    # 拒绝中国IP访问
-    iptables -A INPUT -m set --match-set $IPV4_IPSET_NAME src -j DROP
+    # 允许所有其他流量
+    iptables -A INPUT -j ACCEPT
     
     # 标记 IPv4 功能已启用
     touch "$CONFIG_DIR/ipv4_enabled"
@@ -285,20 +287,22 @@ install_ipv6_overseas() {
     ip6tables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
     ip6tables -A INPUT -i lo -j ACCEPT
     
-    # 允许特定端口
+    # 对放行列表中的端口进行中国IP封禁
     while read port; do
         if [[ $port == *-* ]]; then
             IFS='-' read -r start_port end_port <<< "$port"
-            ip6tables -A INPUT -p tcp --match multiport --dports $start_port:$end_port -j ACCEPT
-            ip6tables -A INPUT -p udp --match multiport --dports $start_port:$end_port -j ACCEPT
+            # 先允许非中国IP访问这些端口
+            ip6tables -A INPUT -p tcp --match multiport --dports $start_port:$end_port -m set --match-set $IPV6_IPSET_NAME src -j DROP
+            ip6tables -A INPUT -p udp --match multiport --dports $start_port:$end_port -m set --match-set $IPV6_IPSET_NAME src -j DROP
         else
-            ip6tables -A INPUT -p tcp --dport $port -j ACCEPT
-            ip6tables -A INPUT -p udp --dport $port -j ACCEPT
+            # 先允许非中国IP访问这个端口
+            ip6tables -A INPUT -p tcp --dport $port -m set --match-set $IPV6_IPSET_NAME src -j DROP
+            ip6tables -A INPUT -p udp --dport $port -m set --match-set $IPV6_IPSET_NAME src -j DROP
         fi
     done < "$ALLOWED_PORTS_FILE"
     
-    # 拒绝中国IP访问
-    ip6tables -A INPUT -m set --match-set $IPV6_IPSET_NAME src -j DROP
+    # 允许所有其他流量
+    ip6tables -A INPUT -j ACCEPT
     
     # 标记 IPv6 功能已启用
     touch "$CONFIG_DIR/ipv6_enabled"
