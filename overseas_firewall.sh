@@ -367,27 +367,11 @@ add_allowed_port() {
     # 添加到放行列表
     echo "$port_input" >> "$ALLOWED_PORTS_FILE"
     
-    # 更新防火墙规则
-    if [ -f "$CONFIG_DIR/ipv4_enabled" ]; then
-        if [[ $port_input == *-* ]]; then
-            IFS='-' read -r start_port end_port <<< "$port_input"
-            iptables -A INPUT -p tcp --match multiport --dports $start_port:$end_port -m set --match-set $IPV4_IPSET_NAME src -j DROP
-            iptables -A INPUT -p udp --match multiport --dports $start_port:$end_port -m set --match-set $IPV4_IPSET_NAME src -j DROP
-        else
-            iptables -A INPUT -p tcp --dport $port_input -m set --match-set $IPV4_IPSET_NAME src -j DROP
-            iptables -A INPUT -p udp --dport $port_input -m set --match-set $IPV4_IPSET_NAME src -j DROP
-        fi
-    fi
-    
-    if [ -f "$CONFIG_DIR/ipv6_enabled" ]; then
-        if [[ $port_input == *-* ]]; then
-            IFS='-' read -r start_port end_port <<< "$port_input"
-            ip6tables -A INPUT -p tcp --match multiport --dports $start_port:$end_port -m set --match-set $IPV6_IPSET_NAME src -j DROP
-            ip6tables -A INPUT -p udp --match multiport --dports $start_port:$end_port -m set --match-set $IPV6_IPSET_NAME src -j DROP
-        else
-            ip6tables -A INPUT -p tcp --dport $port_input -m set --match-set $IPV6_IPSET_NAME src -j DROP
-            ip6tables -A INPUT -p udp --dport $port_input -m set --match-set $IPV6_IPSET_NAME src -j DROP
-        fi
+    # 更新防火墙规则 - 修改这部分以重新应用所有规则
+    if [ -f "$CONFIG_DIR/ipv4_enabled" ] || [ -f "$CONFIG_DIR/ipv6_enabled" ]; then
+        echo -e "${BLUE}更新防火墙规则...${NC}"
+        # 运行启动脚本以重新应用所有规则
+        bash "$STARTUP_SCRIPT"
     fi
     
     echo -e "${GREEN}✅ 已添加端口 $port_input 到放行列表${NC}"
@@ -412,27 +396,11 @@ delete_allowed_port() {
     # 从文件中删除
     sed -i "/^$port_input$/d" "$ALLOWED_PORTS_FILE"
     
-    # 更新防火墙规则
-    if [ -f "$CONFIG_DIR/ipv4_enabled" ]; then
-        if [[ $port_input == *-* ]]; then
-            IFS='-' read -r start_port end_port <<< "$port_input"
-            iptables -D INPUT -p tcp --match multiport --dports $start_port:$end_port -m set --match-set $IPV4_IPSET_NAME src -j DROP
-            iptables -D INPUT -p udp --match multiport --dports $start_port:$end_port -m set --match-set $IPV4_IPSET_NAME src -j DROP
-        else
-            iptables -D INPUT -p tcp --dport $port_input -m set --match-set $IPV4_IPSET_NAME src -j DROP
-            iptables -D INPUT -p udp --dport $port_input -m set --match-set $IPV4_IPSET_NAME src -j DROP
-        fi
-    fi
-    
-    if [ -f "$CONFIG_DIR/ipv6_enabled" ]; then
-        if [[ $port_input == *-* ]]; then
-            IFS='-' read -r start_port end_port <<< "$port_input"
-            ip6tables -D INPUT -p tcp --match multiport --dports $start_port:$end_port -m set --match-set $IPV6_IPSET_NAME src -j DROP
-            ip6tables -D INPUT -p udp --match multiport --dports $start_port:$end_port -m set --match-set $IPV6_IPSET_NAME src -j DROP
-        else
-            ip6tables -D INPUT -p tcp --dport $port_input -m set --match-set $IPV6_IPSET_NAME src -j DROP
-            ip6tables -D INPUT -p udp --dport $port_input -m set --match-set $IPV6_IPSET_NAME src -j DROP
-        fi
+    # 更新防火墙规则 - 修改这部分以重新应用所有规则
+    if [ -f "$CONFIG_DIR/ipv4_enabled" ] || [ -f "$CONFIG_DIR/ipv6_enabled" ]; then
+        echo -e "${BLUE}更新防火墙规则...${NC}"
+        # 运行启动脚本以重新应用所有规则
+        bash "$STARTUP_SCRIPT"
     fi
     
     echo -e "${GREEN}✅ 已从放行列表中删除端口 $port_input${NC}"
