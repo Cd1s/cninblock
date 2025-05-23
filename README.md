@@ -14,7 +14,6 @@
 
 
 ```bash
-# 国外服务器使用以下命令：
 wget -O overseas_only_blocker.sh https://raw.githubusercontent.com/Cd1s/cninblock/refs/heads/main/overseas_firewall.sh && chmod +x overseas_only_blocker.sh && sudo ./overseas_only_blocker.sh
 ```
 
